@@ -23,7 +23,6 @@ networkx==3.3
 numpy==1.25.1
 packaging==23.1
 pandas==2.2.0
-pororo==0.4.2
 protobuf==4.21.12
 pycparser==2.22
 pydantic==2.8.2
@@ -40,7 +39,8 @@ sqlalchemy==2.0.21
 starlette==0.37.2
 sympy==1.13.0
 threadpoolctl==3.2.0
-torch==2.0.0
+pororo==0.4.2
+torch==1.6.0
 transformers==4.32.0
 typing_extensions==4.12.2
 tzdata==2023.4
