@@ -18,35 +18,44 @@ jobs:
       - uses: actions/checkout@v2
       
       - name: Setup Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3
         with:
-          python-version: "3.x"  # 최신 버전의 3.x 사용
-
+          python-version: "3.11"  
+      
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-dev build-essential
+      
       - name: Set .env
         run: |
           echo "${{ secrets.CONFIG_DEV }}" > .env
-
+      
       - name: Install gdown
         run: |
           pip install gdown
-
+      
       - name: Download model file from Google Drive
         env:
           GDRIVE_FILE_ID: ${{ secrets.GDRIVE_FILE_ID }}
         run: |
           gdown https://drive.google.com/uc?id=${GDRIVE_FILE_ID} -O ./bert_emotion_model.pth
 
+      - name: Upgrade pip, setuptools, and wheel
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+
       - name: Create virtual environment and install dependencies
         run: |
           python -m venv venv
           source venv/bin/activate
           pip install -r requirements.txt
-
+      
       - name: Run FastAPI server
         run: |
           source venv/bin/activate
           uvicorn apps.src.app:app --host 0.0.0.0 --port 8000 --daemon
-
+          
       - name: Build & Push Docker image
         run: |
           docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
@@ -61,8 +70,7 @@ jobs:
           username: ${{ secrets.HOST_USERNAME }}
           key: ${{ secrets.PRIVATE_KEY }}
           script: |
-            docker rm -f $(docker ps -qa) || true
-            docker pull ${{ secrets.DOCKER_USERNAME }}/culticare-diary-ai
+            docker-compose pull
             docker-compose up -d
             docker image prune -f
 
@@ -76,7 +84,7 @@ jobs:
         with:
           format: YYYY-MM-DDTHH:mm:ss
           utcOffset: "+09:00"
-
+      
       - name: Print Current Time
         run: echo "Current Time=${{ steps.current-time.outputs.formattedTime }}"
         shell: bash
