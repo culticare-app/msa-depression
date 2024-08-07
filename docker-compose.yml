@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  fastapi:
+    image: jiwonlee42/culticare-diary-ai
+    container_name: fastapi-app
+    ports:
+      - "8000:8000"
+    environment:
+      - UVICORN_CMD=uvicorn apps.src.app:app --host 0.0.0.0 --port 8000
+    restart: always
+    networks:
+      - fastapi_network
+
+networks:
+  fastapi_network:
