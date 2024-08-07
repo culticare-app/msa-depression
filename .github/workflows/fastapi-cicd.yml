@@ -17,38 +17,36 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       
-      - name: setup python
+      - name: Setup Python
         uses: actions/setup-python@v2
         with:
-          python-version: "3"
+          python-version: "3.x"  # 최신 버전의 3.x 사용
       
-      - name: set .env
+      - name: Set .env
         run: |
-          cd .
-          touch ./.env
-          echo "${{ secrets.CONFIG_DEV }}" > ./.env
+          echo "${{ secrets.CONFIG_DEV }}" > .env
       
-      - name: install gdown
+      - name: Install gdown
         run: |
           pip install gdown
       
-      - name: download model file from Google Drive
+      - name: Download model file from Google Drive
         env:
           GDRIVE_FILE_ID: ${{ secrets.GDRIVE_FILE_ID }}
         run: |
           gdown https://drive.google.com/uc?id=${GDRIVE_FILE_ID} -O ./bert_emotion_model.pth
-
-      - name: make venv
+      
+      - name: Create virtual environment and install dependencies
         run: |
           python -m venv venv
-          . venv/bin/activate
+          source venv/bin/activate
           pip install -r requirements.txt
       
-      - name: run fastapi
+      - name: Run FastAPI server
         run: |
-          . venv/bin/activate
-          export FASTAPI_APP=app.py
-          uvicorn app:app --host 0.0.0.0 --port 8000 --daemon
+          source venv/bin/activate
+          export FASTAPI_APP=apps/src/app:app
+          uvicorn apps.src.app:app --host 0.0.0.0 --port 8000 --daemon
       
       - name: Build & Push Docker image
         run: |
@@ -64,12 +62,11 @@ jobs:
           username: ${{ secrets.HOST_USERNAME }}
           key: ${{ secrets.PRIVATE_KEY }}
           script: |
-            docker rm -f $(docker ps -qa)
+            docker rm -f $(docker ps -qa) || true
             docker pull ${{ secrets.DOCKER_USERNAME }}/culticare-diary-ai
             docker-compose up -d
             docker image prune -f
 
-## time
   current-time:
     needs: CI-CD
     runs-on: ubuntu-latest
@@ -80,6 +77,7 @@ jobs:
         with:
           format: YYYY-MM-DDTHH:mm:ss
           utcOffset: "+09:00"
+      
       - name: Print Current Time
-        run: echo "Current Time=${{steps.current-time.outputs.formattedTime}}"
+        run: echo "Current Time=${{ steps.current-time.outputs.formattedTime }}"
         shell: bash
