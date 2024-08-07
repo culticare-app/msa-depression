@@ -93,7 +93,7 @@ emotion_mapping = {
 
 def preprocess_text(text):
     # ......과 같은 여러 개의 점을 하나로 변환
-    text = re.sub(r'\.{2,}', '.', text)
+    text = re.sub(r'\.{2,}', '', text)
     # . 으로 문장을 분리
     sentences = [sentence.strip() for sentence in text.split('.') if sentence.strip()]
     return sentences
