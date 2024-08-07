@@ -1,0 +1,85 @@
+name: FastAPI CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  CI-CD:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3"
+      
+      - name: set .env
+        run: |
+          cd .
+          touch ./.env
+          echo "${{ secrets.CONFIG_DEV }}" > ./.env
+      
+      - name: install gdown
+        run: |
+          pip install gdown
+      
+      - name: download model file from Google Drive
+        env:
+          GDRIVE_FILE_ID: ${{ secrets.GDRIVE_FILE_ID }}
+        run: |
+          gdown https://drive.google.com/uc?id=${GDRIVE_FILE_ID} -O ./bert_emotion_model.pth
+
+      - name: make venv
+        run: |
+          python -m venv venv
+          . venv/bin/activate
+          pip install -r requirements.txt
+      
+      - name: run fastapi
+        run: |
+          . venv/bin/activate
+          export FASTAPI_APP=app.py
+          uvicorn app:app --host 0.0.0.0 --port 8000 --daemon
+      
+      - name: Build & Push Docker image
+        run: |
+          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/culticare-diary-ai .
+          docker push ${{ secrets.DOCKER_USERNAME }}/culticare-diary-ai:latest
+
+      - name: SSH into development server and deploy
+        uses: appleboy/ssh-action@master
+        if: contains(github.ref, 'main')
+        with:
+          host: ${{ secrets.HOST_DEV }}
+          username: ${{ secrets.HOST_USERNAME }}
+          key: ${{ secrets.PRIVATE_KEY }}
+          script: |
+            docker rm -f $(docker ps -qa)
+            docker pull ${{ secrets.DOCKER_USERNAME }}/culticare-diary-ai
+            docker-compose up -d
+            docker image prune -f
+
+## time
+  current-time:
+    needs: CI-CD
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Current Time
+        uses: 1466587594/get-current-time@v2
+        id: current-time
+        with:
+          format: YYYY-MM-DDTHH:mm:ss
+          utcOffset: "+09:00"
+      - name: Print Current Time
+        run: echo "Current Time=${{steps.current-time.outputs.formattedTime}}"
+        shell: bash
