@@ -48,7 +48,7 @@ jobs:
         run: |
           . venv/bin/activate
           export FASTAPI_APP=app.py
-          uvicorn app:app --host 0.0.0.0 --port 8000 --daemon
+          uvicorn app:app --host 0.0.0.0 --port 8000
       
       - name: Build & Push Docker image
         run: |
