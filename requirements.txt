@@ -5,5 +5,5 @@ uvicorn
 fastapi
 pandas
 scikit-learn
-dotenv
+python-dotenv
 sqlalchemy
