@@ -1,8 +1,9 @@
-torch==2.0.1
-transformers==4.32.0
-fastapi==0.112.0
-uvicorn==0.30.5
-pydantic==2.8.2
-SQLAlchemy==2.0.21
-python-dotenv==1.0.0
-pymysql==1.1.0
+torch>=1.7.1
+transformers>=4.11.3
+flask
+uvicorn
+fastapi
+pandas
+scikit-learn
+# KoBERT 라이브러리 추가
+git+https://github.com/SKTBrain/KoBERT.git#egg=kobert_tokenizer&subdirectory=kobert_hf
