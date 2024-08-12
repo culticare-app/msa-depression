@@ -7,7 +7,7 @@ WORKDIR /app
 # Copy necessary files and directories
 COPY requirements.txt .
 COPY app.py .
-COPY config.py .  # config 파일이 필요할 경우
+COPY .env .
 
 # Execute build commands
 RUN pip install --no-cache-dir -r requirements.txt
