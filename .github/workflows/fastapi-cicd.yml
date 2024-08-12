@@ -44,12 +44,6 @@ jobs:
           . venv/bin/activate
           pip install -r requirements.txt
       
-      - name: run fastapi
-        run: |
-          . venv/bin/activate
-          export FASTAPI_APP=app.py
-          uvicorn app:app --host 0.0.0.0 --port 8000
-      
       - name: Build & Push Docker image
         run: |
           docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
