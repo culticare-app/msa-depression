@@ -12,47 +12,31 @@ permissions:
 jobs:
   CI-CD:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
+
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
       
-      - name: setup python
+      - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: "3"
       
-      - name: set .env
+      - name: Set up environment variables
         run: |
-          cd .
-          touch ./.env
-          echo "${{ secrets.CONFIG_DEV }}" > ./.env
+          echo "${{ secrets.CONFIG_DEV }}" > .env
       
-      - name: install gdown
+      - name: Build Docker image
         run: |
-          pip install gdown
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/culticare-diary-ai .
       
-      - name: download model file from Google Drive
-        env:
-          GDRIVE_FILE_ID: ${{ secrets.GDRIVE_FILE_ID }}
-        run: |
-          gdown https://drive.google.com/uc?id=${GDRIVE_FILE_ID} -O ./bert_emotion_model.pth
-
-      - name: make venv
-        run: |
-          python -m venv venv
-          . venv/bin/activate
-          pip install -r requirements.txt
-      
-      - name: Build & Push Docker image
+      - name: Push Docker image
         run: |
           docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/culticare-diary-ai .
           docker push ${{ secrets.DOCKER_USERNAME }}/culticare-diary-ai:latest
-
-      - name: SSH into development server and deploy
+      
+      - name: Deploy to development server
         uses: appleboy/ssh-action@master
-        if: contains(github.ref, 'main')
         with:
           host: ${{ secrets.HOST_DEV }}
           username: ${{ secrets.HOST_USERNAME }}
@@ -63,7 +47,6 @@ jobs:
             docker-compose -f docker-compose.ai.yml up -d
             docker image prune -f
 
-## time
   current-time:
     needs: CI-CD
     runs-on: ubuntu-latest
@@ -76,4 +59,3 @@ jobs:
           utcOffset: "+09:00"
       - name: Print Current Time
         run: echo "Current Time=${{steps.current-time.outputs.formattedTime}}"
-        shell: bash
