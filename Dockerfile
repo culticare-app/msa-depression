@@ -1,6 +1,9 @@
 # Create a new build stage from a base image
 FROM python:3.12-slim
 
+# Install curl
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
 # Change working directory
 WORKDIR /app
 
