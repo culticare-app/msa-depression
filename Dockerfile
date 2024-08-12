@@ -1,21 +1,19 @@
-# Use the official slim Python image as a parent image
-FROM python:3.9-slim
+# Create a new build stage from a base image
+FROM python:3.12-slim
 
-# Set working directory
+# Change working directory
 WORKDIR /app
 
-# Install dependencies in one step to leverage Docker's layer caching
+# Copy necessary files and directories
 COPY requirements.txt .
+COPY app.py .
+COPY config.py .  # config 파일이 필요할 경우
 
-# Install dependencies
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+# Execute build commands
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application code
-COPY . .
-
-# Expose the port the app runs on
+# Describe which ports your application is listening on
 EXPOSE 8000
 
-# Command to run the app
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+# Specify default executable
+ENTRYPOINT [ "uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000" ]
