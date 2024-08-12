@@ -8,6 +8,7 @@ WORKDIR /app
 COPY requirements.txt .
 COPY app.py .
 COPY .env .
+COPY bert_emotion_model.pth .
 
 # Execute build commands
 RUN pip install --no-cache-dir -r requirements.txt
