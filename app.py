@@ -65,7 +65,7 @@ class BERTClassifier(nn.Module):
 model = BERTClassifier(BertModel.from_pretrained('monologg/kobert'))
 model_path = './bert_emotion_model.pth'
 try:
-    model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu'), weights_only=True))
+    model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu'), weights_only=False))
 
     model.eval()
 except Exception as e:
