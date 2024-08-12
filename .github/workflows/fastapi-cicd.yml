@@ -17,45 +17,39 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       
-      - name: Setup Python
-        uses: actions/setup-python@v3
+      - name: setup python
+        uses: actions/setup-python@v2
         with:
-          python-version: "3.11"  
+          python-version: "3"
       
-      - name: Install system dependencies
+      - name: set .env
         run: |
-          sudo apt-get update
-          sudo apt-get install -y python3-dev build-essential
+          cd .
+          touch ./.env
+          echo "${{ secrets.CONFIG_DEV }}" > ./.env
       
-      - name: Set .env
-        run: |
-          echo "${{ secrets.CONFIG_DEV }}" > .env
-      
-      - name: Install gdown
+      - name: install gdown
         run: |
           pip install gdown
       
-      - name: Download model file from Google Drive
+      - name: download model file from Google Drive
         env:
           GDRIVE_FILE_ID: ${{ secrets.GDRIVE_FILE_ID }}
         run: |
           gdown https://drive.google.com/uc?id=${GDRIVE_FILE_ID} -O ./bert_emotion_model.pth
 
-      - name: Upgrade pip, setuptools, and wheel
-        run: |
-          python -m pip install --upgrade pip setuptools wheel
-
-      - name: Create virtual environment and install dependencies
+      - name: make venv
         run: |
           python -m venv venv
-          source venv/bin/activate
+          . venv/bin/activate
           pip install -r requirements.txt
       
-      - name: Run FastAPI server
+      - name: run fastapi
         run: |
-          source venv/bin/activate
-          uvicorn apps.src.app:app --host 0.0.0.0 --port 8000 
-          
+          . venv/bin/activate
+          export FASTAPI_APP=app.py
+          uvicorn app:app --host 0.0.0.0 --port 8000
+      
       - name: Build & Push Docker image
         run: |
           docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
@@ -70,10 +64,12 @@ jobs:
           username: ${{ secrets.HOST_USERNAME }}
           key: ${{ secrets.PRIVATE_KEY }}
           script: |
-            docker-compose pull
-            docker-compose up -d
+            docker rm -f $(docker ps -qa)
+            docker pull ${{ secrets.DOCKER_USERNAME }}/culticare-diary-ai
+            docker-compose -f docker-compose.ai.yml up -d
             docker image prune -f
 
+## time
   current-time:
     needs: CI-CD
     runs-on: ubuntu-latest
@@ -84,7 +80,6 @@ jobs:
         with:
           format: YYYY-MM-DDTHH:mm:ss
           utcOffset: "+09:00"
-      
       - name: Print Current Time
-        run: echo "Current Time=${{ steps.current-time.outputs.formattedTime }}"
+        run: echo "Current Time=${{steps.current-time.outputs.formattedTime}}"
         shell: bash
